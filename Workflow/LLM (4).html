@@ -275,11 +275,11 @@
             addMessageToList(`Error: ${error.message}`);
         };
 
-        function sendMessage(message) {
-            const jsonMessage = JSON.stringify({prompt: message});
-            socket.send(jsonMessage);
-            console.log(`Sent: ${jsonMessage}`);
-        }   
+        function sendMessage(userPart, aiPart) {
+    const jsonMessage = JSON.stringify({ user: userPart, ai: aiPart });
+    socket.send(jsonMessage);
+    console.log(`Sent: ${jsonMessage}`);
+}   
         let isDragging = false;
         let lastClientY;
         const minimapProgress = document.getElementById('minimap-progress');
@@ -569,42 +569,45 @@
         toggleSpeechRecognitionBtn.addEventListener('click', toggleSpeechRecognition);
 
         async function continueStory() {
-        const userInput = storyDiv.querySelector('.user-input:last-of-type');
-        if (userInput) {
-            const userInputText = userInput.value.trim();
-            if (userInputText) {
-                const userInputChunk = document.createElement('div');
-                userInputChunk.className = 'chunk';
-                userInputChunk.textContent = userInputText;
+    const userInput = storyDiv.querySelector('.user-input:last-of-type');
+    if (userInput) {
+        const userInputText = userInput.value.trim();
+        if (userInputText) {
+            const userInputChunk = document.createElement('div');
+            userInputChunk.className = 'chunk';
+            userInputChunk.textContent = userInputText;
 
-                userInput.replaceWith(userInputChunk); // Replace input with text first
+            userInput.replaceWith(userInputChunk); // Replace input with text first
 
-                messages.push({ "role": "user", "content": userInputText });
+            messages.push({ "role": "user", "content": userInputText });
 
-                saveStoryChunk(userInputText, 'user'); // Store user input in IndexedDB
+            saveStoryChunk(userInputText, 'user'); // Store user input in IndexedDB
 
-                        const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${apiKey}`
-                            },
-                            body: JSON.stringify({
-                                model: "gpt-3.5-turbo",
-                                messages,
-                                max_tokens: 30
-                            })
-                        });
+            const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: "gpt-3.5-turbo",
+                    messages,
+                    max_tokens: 30
+                })
+            });
 
-                        const data = await response.json();
-                        const storyContinuation = data.choices[0].message.content;
+            const data = await response.json();
+            const storyContinuation = data.choices[0].message.content;
 
-                        appendStoryChunkWithAnimation(storyContinuation); // AI-generated content with animation
+            appendStoryChunkWithAnimation(storyContinuation); // AI-generated content with animation
 
-                        messages.push({ "role": "assistant", "content": storyContinuation });
-                    }
-                }
-            }
+            messages.push({ "role": "assistant", "content": storyContinuation });
+
+            // Send both user and AI parts to the server
+            sendMessage(userInputText, storyContinuation);
+        }
+    }
+}
 
         function loadStory() {
             initDB().then((db) => {

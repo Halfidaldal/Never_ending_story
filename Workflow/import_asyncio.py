@@ -38,39 +38,7 @@ def get_history(prompt_id):
     with urllib.request.urlopen(f"http://{server_address}/history/{prompt_id}") as response:
         return json.loads(response.read())
 
-def save_prompt_and_images_to_firestore(prompt_comfy, prompt_id, server_address):
-    history = get_history(prompt_id)[prompt_id]
-    
-    # Extract the prompt text
-    prompt_text = prompt_comfy["113"]["inputs"]["text"]
 
-    # Save the prompt and images to Firestore
-    doc_ref = db.collection("prompts").document(prompt_id)
-    doc_ref.set({
-        "prompt": prompt_text,
-        "prompt_id": prompt_id
-    })
-
-    # Save the images
-    for node_id in history['outputs']:
-        node_output = history['outputs'][node_id]
-        if 'images' in node_output:
-            for image in node_output['images']:
-                image_data = get_image(image['filename'], image['subfolder'], image['type'])
-                image_obj = Image.open(io.BytesIO(image_data))
-
-                # Save the image locally as a temporary file
-                temp_image_path = f"/tmp/{image['filename']}.png"
-                image_obj.save(temp_image_path, format='PNG')
-
-                # Upload the image to Firestore Storage
-                blob = bucket.blob(f"images/{prompt_id}/{image['filename']}.png")
-                blob.upload_from_filename(temp_image_path)
-
-                # Add image URL to Firestore document
-                doc_ref.update({
-                    f"images.{image['filename']}": blob.public_url
-                })
 
 def get_images(prompt_comfy):
     ws = websocket.WebSocket()
@@ -100,9 +68,6 @@ def get_images(prompt_comfy):
             output_images[node_id] = images_output
     
     ws.close()
-
-    # Call the function to save prompt and images to Firestore
-    save_prompt_and_images_to_firestore(prompt_comfy, prompt_id, server_address)
     
     return output_images
 
@@ -117,26 +82,56 @@ async def server(websocket, path):
                     workflow_data = f.read()
                 prompt_comfy = json.loads(workflow_data)
                 prompt_data = json.loads(message)  # Here, prompt_data will be a dictionary
-                if 'prompt' in prompt_data:
-                    prompt_comfy["113"]["inputs"]["text"] = prompt_data['prompt']  # Extract the string associated with the key 'prompt'
+                
+                user_part = prompt_data.get('user')
+                ai_part = prompt_data.get('ai')
+                if user_part is not None and ai_part is not None:
+                    combined_prompt = f"{user_part} {ai_part}"
+                    prompt_comfy["113"]["inputs"]["text"] = combined_prompt  # Use combined user and AI parts
+
+                    # Process images
+                    images = get_images(prompt_comfy)
+                    image_urls = []
+                    
+                    for node_id in images:
+                        for image_data in images[node_id]:
+                            image = Image.open(io.BytesIO(image_data))
+                            image.show()
+                            # Save image to Firebase Storage
+                            image_byte_array = io.BytesIO()
+                            image.save(image_byte_array, format='PNG')
+                            image_byte_array.seek(0)
+                            blob = bucket.blob(f'images/{node_id}_{user_part[:10]}_{ai_part[:10]}.png')
+                            blob.upload_from_file(image_byte_array, content_type='image/png')
+                            image_url = blob.public_url
+                            image_urls.append(image_url)
+
+                    # Save to Firestore in a single document
+                    doc_ref = db.collection("story_data").add({
+                        "user": user_part,
+                        "ai": ai_part,
+                        "combined_prompt": combined_prompt,
+                        "image_urls": image_urls,
+                        "timestamp": firestore.SERVER_TIMESTAMP,
+                        "client_id": client_id,
+                    })
                 else:
-                    raise ValueError("Missing 'prompt' key in received data")
+                    missing_keys = []
+                    if user_part is None:
+                        missing_keys.append('user')
+                    if ai_part is None:
+                        missing_keys.append('ai')
+                    raise ValueError(f"Missing keys in received data: {', '.join(missing_keys)}")
             except (json.JSONDecodeError, ValueError) as e:
                 print(f"Error processing message: {str(e)}")
                 continue  # Skip to the next message if the current one is invalid
 
-            # Now pass the parsed prompt text to the get_images function
-            images = get_images(prompt_comfy)
-            
-            for node_id in images:
-                for image_data in images[node_id]:
-                    image = Image.open(io.BytesIO(image_data))
-                    image.show()  # This shows the image on the server, typically you would send back a response instead
             response = "Images processed and displayed"
             await websocket.send(response)
             print(f"Sent response to client: {response}")
     except websockets.exceptions.ConnectionClosed:
         print("A client just disconnected")
+
 
 async def main():
     print("Server is starting...")
