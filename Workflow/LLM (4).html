@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Never-Ending Story</title>
-    <style>/* Lighter color palette for a more modern book-like feel */
+    <style>
+        /* Lighter color palette for a more modern book-like feel */
         body {
             font-family: 'Palatino', 'Book Antiqua', Palatino, serif;
             background-color: #f0f0f0; /* Light gray for the background */
@@ -17,7 +18,62 @@
             margin-bottom: 32px; /* Adds space below the header */
             padding: 10px; /* Padding to increase focus on text */
         }
-        /* Add this to the existing CSS */
+
+        .page {
+            max-width: 800px; /* Increased width to accommodate side-by-side layout */
+            position: relative;
+            margin: 0 auto 20px auto; /* Centered horizontally with margin below */
+            padding: 20px;
+            border: 10px solid rgba(192, 192, 192, 0.3);
+            box-shadow: 4px 4px 8px rgba(128, 128, 128, 0.1);
+            background: #ffffff;
+            display: flex; /* Flexbox for side-by-side layout */
+            gap: 20px; /* Space between the image and the story */
+        }
+
+        .story-content {
+            flex: 1; /* Take remaining space */
+            text-align: left;
+        }
+
+        .story-content .chunk {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid rgba(192, 192, 192, 0.5); /* Light gray border */
+            border-radius: 8px;
+            background: rgba(240, 240, 240, 0.8); /* Very light gray */
+            font-size: 18px;
+            color: #4f4f4f; /* Medium gray text color */
+        }
+
+        .story-content .ai-chunk {
+            background: rgba(230, 230, 230, 0.8); /* Slightly different light gray */
+            position: relative; /* Required for absolute positioning */
+            padding-top: 12px;
+            padding-left: 40px; /* Ensure space for the gradient square */
+            padding-right: 10px; /* Adjust as needed for text alignment */
+            margin: 10px 0; /* Consistent margins with other chunks */
+            border: 1px solid rgba(192, 192, 192, 0.5); /* Light gray border for definition */
+            border-radius: 8px; /* Rounded corners for a softer look */
+        }
+
+        .story-content .user-input {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid rgba(192, 192, 192, 0.5);
+            border-radius: 8px;
+            background: rgba(245, 245, 245, 0.8);
+            text-align: left;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        .story-content .user-input:focus {
+            border-color: rgba(192, 192, 192, 0.7); /* Slightly darker on focus */
+            box-shadow: 0 0 0 2px rgba(192, 192, 192, 0.5); /* Subtle focus effect */
+        }
+
         .gradient-square {
             width: 20px; /* Adjust size */
             height: 20px;
@@ -33,58 +89,16 @@
             background-size: 400% 400%;
         }
 
-        .page {
-            max-width: 600px;
-            position: relative;
-            margin: 0 auto 20px auto; /* Centered horizontally with margin below */
-            padding: 60px 20px;
-            border: 10px solid rgba(192, 192, 192, 0.3);
-            box-shadow: 4px 4px 8px rgba(128, 128, 128, 0.1);
-            background: #ffffff;
-            position: relative; /* Reference for absolutely positioned elements */
+        .image-container {
+            flex: 1; /* Take up equal space */
+            max-width: 100%; /* Ensure the image doesn't overflow */
         }
 
-        .chunk {
-            text-align: left;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid rgba(192, 192, 192, 0.5); /* Light gray border */
-            border-radius: 8px;
-            background: rgba(240, 240, 240, 0.8); /* Very light gray */
-            font-size: 18px;
-            color: #4f4f4f; /* Medium gray text color */
+        .image-container img {
+            width: 100%; /* Make image responsive */
+            height: auto; /* Keep aspect ratio */
         }
 
-        /* CSS for AI chunk with adjusted padding */
-        .ai-chunk {
-            background: rgba(230, 230, 230, 0.8); /* Slightly different light gray */
-            position: relative; /* Required for absolute positioning */
-            padding-top: 12px;
-            padding-left: 40px; /* Ensure space for the gradient square */
-            padding-right: 10px; /* Adjust as needed for text alignment */
-            margin: 10px 0; /* Consistent margins with other chunks */
-            border: 1px solid rgba(192, 192, 192, 0.5); /* Light gray border for definition */
-            border-radius: 8px; /* Rounded corners for a softer look */
-        }
-
-        .user-input {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            border: 1px solid rgba(192, 192, 192, 0.5);
-            border-radius: 8px;
-            background: rgba(245, 245, 245, 0.8);
-            text-align: left;
-            outline: none;
-            box-sizing: border-box; /* Add this line */
-            }
-
-        .user-input:focus {
-            border-color: rgba(192, 192, 192, 0.7); /* Slightly darker on focus */
-            box-shadow: 0 0 0 2px rgba(192, 192, 192, 0.5); /* Subtle focus effect */
-        }
-
-        /* Minimap container - lighter colors */
         .minimap {
             position: absolute;
             top: 50%;
@@ -99,7 +113,6 @@
             border-radius: 8px;
         }
 
-        /* Minimap progress bar - lighter colors */
         .minimap-progress {
             position: absolute;
             top: 0;
@@ -109,6 +122,7 @@
             transition: height 0.1s ease;
             border-radius: 8px; /* Rounded corners for a softer look */
         }
+
         .button {
             display: inline-block;
             border: none;
@@ -143,10 +157,9 @@
         .active .tts-btn img {
             content: url('text-to-speech-active.svg');
             background-color: #48A7FF;
-            color: white;
+            color: white.
         }
 
-        /* Specific styling for buttons in the button-container */
         .button-container {
             position: absolute; /* Relative to .page container */
             right: 0; /* Aligns to the right side of .page */
@@ -169,12 +182,12 @@
             border-radius: 50%; /* Circle shape */
             background-color: #ffffff; /* Light gray background */
             transition: transform 0.3s, background-color 0.3s; /* Smooth transitions for hover effects */
-            cursor: pointer;
+            cursor: pointer.
         }
 
         .button-container .button img {
             width: 20px; /* Icon size inside the button */
-            height: 20px;
+            height: 20px.
         }
 
         .button-container .button:hover,
@@ -189,18 +202,16 @@
             width: 100%; /* Covers the full width of the viewport */
             clear: both; /* Clears any floated elements above, if any */
         }
-
-
-
-        
     </style>
 <script type="module">
-    // Import the functions you need from the SDKs you need
+    // Import the functions
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, query, orderBy, limit, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics.js";
-    import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
   
-    // Your web app's Firebase configuration
+    //Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyAoRzih_7WHG-Hf6duUB9xHlcDcDOAyfBg",
       authDomain: "the-never-ending-story-a7b5f.firebaseapp.com",
@@ -215,32 +226,73 @@
     const app = initializeApp(firebaseConfig);
     const analytics = getAnalytics(app);
     const db = getFirestore(app);
+    const storage = getStorage(app);
+    async function getLatestImageURL() {
+            const imagesRef = collection(db, "story_data");
+            const q = query(imagesRef, orderBy("timestamp", "desc"), limit(1));
+            const querySnapshot = await getDocs(q);
+            let imageUrl = "";
+
+            querySnapshot.forEach((doc) => {
+                const imageUrls = doc.data().image_urls;
+                if (imageUrls && imageUrls.length > 0) {
+                    imageUrl = imageUrls[0];
+                }
+            });
+
+            return imageUrl;
+        }
+
+        // Function to display the latest image
+        async function displayLatestImage() {
+    const url = await getLatestImageURL();
+    console.log("Image URL:", url); // Log the URL to the console
+    if (url) {
+        const imgElement = document.getElementById('latestImage');
+        imgElement.src = url;
+        imgElement.alt = "Latest Uploaded Image";
+    } else {
+        console.error("No image URL found");
+    }
+}
+const imagesRef = collection(db, "story_data");
+        const q = query(imagesRef, orderBy("timestamp", "desc"), limit(1));
+        onSnapshot(q, (querySnapshot) => {
+            querySnapshot.forEach(async (doc) => {
+                const url = await getLatestImageURL(doc);
+                displayLatestImage(url);
+            });
+        });
+        document.addEventListener('DOMContentLoaded', displayLatestImage);
   </script>
 </head>
 <body>
-
-    <!-- Main Page Content -->
+    <h1>The Never Ending Story</h1>
     <div class="page">
-        <h1>Never-Ending Story</h1>
-        <div id="story"></div>
-        <div class="minimap">
-            <div class="minimap-progress" id="minimap-progress"></div>
+        <div class="story-content">
+            <h1>Create a story</h1>
+            <div id="story"></div>
+            <div class="minimap">
+                <div class="minimap-progress" id="minimap-progress"></div>
+            </div>
+            <div class="button-container">
+                <button id="clearDatabaseBtn" class="button">
+                    <img src="clear-database-icon.svg" alt="Clear Database">
+                </button>
+                <button id="toggleSpeechRecognitionBtn" class="button">
+                    <img src="speech-recognition.svg" alt="Toggle Speech Recognition">
+                </button>
+                <button id="toggleTextToSpeechBtn" class="button">
+                    <img src="text-to-speech.svg" alt="Disable Text to Speech">
+                </button>
+                <button id="exportCSVBtn" class="button">
+                    <img src="export-csv.svg" alt="Export to CSV">
+                </button>
+            </div>
         </div>
-        <!-- Add this after the story div -->
-    <div class="button-container">
-        <button id="clearDatabaseBtn" class="button">
-            <img src="clear-database-icon.svg" alt="Clear Database">
-        </button>
-        <button id="toggleSpeechRecognitionBtn" class="button">
-            <img src="speech-recognition.svg" alt="Toggle Speech Recognition">
-        </button>
-        <button id="toggleTextToSpeechBtn" class="button">
-            <img src="text-to-speech.svg" alt="Disable Text to Speech">
-        </button>
-        <button id="exportCSVBtn" class="button">
-            <img src="export-csv.svg" alt="Export to CSV">
-          </button>
-    </div>
+        <div class="image-container">
+            <img id="latestImage" src="" alt="Latest Uploaded Image"/>
+        </div>
     </div>
     <footer class="footer"></footer>
     
@@ -279,7 +331,8 @@
     const jsonMessage = JSON.stringify({ user: userPart, ai: aiPart });
     socket.send(jsonMessage);
     console.log(`Sent: ${jsonMessage}`);
-}   
+}
+
         let isDragging = false;
         let lastClientY;
         const minimapProgress = document.getElementById('minimap-progress');
@@ -568,7 +621,9 @@
         const toggleSpeechRecognitionBtn = document.getElementById('toggleSpeechRecognitionBtn');
         toggleSpeechRecognitionBtn.addEventListener('click', toggleSpeechRecognition);
 
-        async function continueStory() {
+        let latestUserInput = null;
+
+async function continueStory() {
     const userInput = storyDiv.querySelector('.user-input:last-of-type');
     if (userInput) {
         const userInputText = userInput.value.trim();
@@ -583,6 +638,8 @@
 
             saveStoryChunk(userInputText, 'user'); // Store user input in IndexedDB
 
+            latestUserInput = userInputText; // Store latest user input
+
             const response = await fetch('https://api.openai.com/v1/chat/completions', {
                 method: 'POST',
                 headers: {
@@ -592,7 +649,7 @@
                 body: JSON.stringify({
                     model: "gpt-3.5-turbo",
                     messages,
-                    max_tokens: 30
+                    max_tokens: 50
                 })
             });
 
@@ -604,10 +661,14 @@
             messages.push({ "role": "assistant", "content": storyContinuation });
 
             // Send both user and AI parts to the server
-            sendMessage(userInputText, storyContinuation);
+            if (latestUserInput && storyContinuation) {
+                sendMessage(latestUserInput, storyContinuation);
+                latestUserInput = null; // Clear after sending
+            }
         }
     }
 }
+
 
         function loadStory() {
             initDB().then((db) => {
@@ -716,7 +777,7 @@
                 body: JSON.stringify({
                     model: "gpt-3.5-turbo",
                     messages: [{ role: "system", content: prompt }],
-                    max_tokens: 30
+                    max_tokens: 50
                 })
             });
             const data = await response.json();
@@ -801,10 +862,10 @@
                     model: "gpt-3.5-turbo",
                     messages: [{ role: "system", content: `Generate a story continuation in a ${currentTone} tone.` },
                                { role: "user", content: prompt }],
-                    max_tokens: 30,
+                    max_tokens: 50,
                     n: 1,
                     stop: null,
-                    temperature: 0.7
+                    temperature: 0.5
                 })
             });
             const data = await response.json();
@@ -861,7 +922,7 @@
                     body: JSON.stringify({
                         model: "gpt-3.5-turbo",
                         messages: [{ role: "system", content: "Continue this story." }, { role: "user", content: lastMessage }],
-                        max_tokens: 30
+                        max_tokens: 50
                     })
                 });
                 const data = await response.json();
@@ -907,7 +968,7 @@
                         model: "gpt-3.5-turbo",
                         messages: [{ role: "system", content: "Suggest a different way to continue this story. It should be only one suggestion with one sentence, no numbers or bullet points and NO QUOTES. Just the sentence." },
                                 { role: "user", content: prompt }],
-                        max_tokens: 30,
+                        max_tokens: 50,
                         n: 3, // Request 3 completions
                         stop: null,
                         temperature: 0.9
